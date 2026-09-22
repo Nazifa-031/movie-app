@@ -18,7 +18,7 @@ const API_OPTIONS = {
 
 // 2. defining Endpoints, One function per endpoint — pure, no state, no UI
 
-export const allMovies = async () => {
+export const allMovies = async (page = 1) => {
   // 1. fetch() gives a Promise, so store it in response using await.
   // 2. The Promise resolves to a Response object.
   // 3. response.json() returns a Promise of the parsed data.
@@ -26,7 +26,7 @@ export const allMovies = async () => {
   // 5. response.json() reads the Response body and parses it into a real JS object
   // it's async too (reading the stream takes a moment), hence the second await
 
-  const endpoint = `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=1&sort_by=popularity.desc`;
+  const endpoint = `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
   const response = await fetch(endpoint, API_OPTIONS);
   if (!response.ok) {
     throw new Error("Failed to fetch movies");
@@ -35,5 +35,7 @@ export const allMovies = async () => {
   }
 
   const data = await response.json();
-   return data; // hand the parsed data to whoever called allMovies()
+  return data; // hand the parsed data to whoever called allMovies()
 };
+
+

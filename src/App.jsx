@@ -2,22 +2,28 @@ import { allMovies } from "./services/tmdb";
 import { useEffect, useState } from "react";
 import MovieCards from "./components/MovieCards";
 import Loader from "./components/Loader";
+import Pagination from "./components/Pagination";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [movies, setmovies] = useState([]); // [moviesarray, setmoviesarray]
+  const [page, setPage] = useState(1);
+  const [totalpages, setTotalpages] = useState(1);
 
   const Movies = async () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await allMovies();
+      const response = await allMovies(page);
       console.log(response); // {page: 1, results: Array(20), total_pages: 1001, total_results: 20001}
 
       const movies = response.results;
       setmovies(movies);
-      console.log(movies);  // {page: 1, results: Array(20), total_pages: 1001, total_results: 20001}
+      console.log(movies); // {page: 1, results: Array(20), total_pages: 1001, total_results: 20001}
+
+      const total = response.total_pages;
+      setTotalpages(total);
     } catch (error) {
       setError(error);
       console.error(`Error in the Movies Function: ${error}`);
@@ -28,18 +34,25 @@ const App = () => {
 
   useEffect(() => {
     Movies();
-  }, []);
+  }, [page]);
+
+
+
 
   return isLoading ? (
     <Loader />
   ) : error ? (
     <p>{error}</p>
   ) : (
-    <ul>
-      {movies.map((movie) => (
-        <MovieCards key={movie.id} movie={movie} />
-      ))}
-    </ul>
+    <>
+      <ul>
+        {movies.map((movie) => (
+          <MovieCards key={movie.id} movie={movie} />
+        ))}
+      </ul>
+
+      <Pagination page={page} totalpages={totalpages} setPage={setPage} />
+    </>
   );
 };
 
