@@ -1,0 +1,15 @@
+what is pagination 
+
++ -
+
+query api
+
+Query parameter
+
+Used to filter, search, sort or paginate.
+
+/movies?genre=action&page=2
+
+
+search .. user inputs .. api calls .. to match input = title ...if not found display error message 
+use debounce to set timer for the search result to operate

@@ -38,4 +38,18 @@ export const allMovies = async (page = 1) => {
   return data; // hand the parsed data to whoever called allMovies()
 };
 
+// encodeURIComponent() encodes special characters in a search string so it can safely go inside a URL.
+// Example: encodeURIComponent("Spider Man")
 
+export const searchapi = async (searchquery, page = 1) => {
+  const endpoint = `${API_BASE_URL}/search/movie?query=${encodeURIComponent(searchquery)}&include_adult=false&language=en-US&page=${page}`;
+  const response = await fetch(endpoint, API_OPTIONS);
+
+  if (!response.ok) {
+    throw new Error("Failed to search movies");
+  }
+
+  const data = await response.json();
+  return data;
+};
+  

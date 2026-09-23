@@ -1,6 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisVertical, faLanguage } from "@fortawesome/free-solid-svg-icons";
-import noPoster from '../assets/no-poster.png';
+import {
+  faEllipsisVertical,
+  faLanguage,
+} from "@fortawesome/free-solid-svg-icons";
+import noPoster from "../assets/no-poster.png";
 
 const MovieCards = ({
   movie: {
@@ -15,7 +18,14 @@ const MovieCards = ({
   return (
     <div>
       <li>
-        <img src={poster_path ? `http://image.tmdb.org/t/p/w185/${poster_path}` : `${noPoster}`} alt="poster" />
+        <img
+          src={
+            poster_path
+              ? `http://image.tmdb.org/t/p/w185/${poster_path}`
+              : `${noPoster}`
+          }
+          alt="poster"
+        />
         <FontAwesomeIcon icon={faEllipsisVertical} />
         <h3>{title}</h3>
         <h4>{release_date}</h4>
@@ -27,5 +37,3 @@ const MovieCards = ({
 };
 
 export default MovieCards;
-
-
