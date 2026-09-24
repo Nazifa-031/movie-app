@@ -1,16 +1,91 @@
-# React + Vite
+# 🎬 Movie App
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React movie discovery app using the **TMDB API**, with search, filters, pagination, loading states, and debounced API requests.
 
-Currently, two official plugins are available:
+## ✨ Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* 🔎 Search movies
+* 🎯 Filter by genre, rating, and release year
+* 📄 Pagination
+* ⏳ Loading & error states
+* 🕐 500ms search debounce
+* 🖼️ Poster fallback handling
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**React · JavaScript · Vite · TMDB API · Font Awesome**
 
-## Expanding the Oxlint configuration
+## 🔑 Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+Create `.env` in the project root:
+
+```env
+VITE_TMDB_API_KEY=your_tmdb_access_token
+```
+
+Vite exposes frontend environment variables only when they start with `VITE_`.
+
+## 🧠 API Architecture
+
+```text
+React
+  ↓
+Endpoint Function
+  ↓
+fetchMovies(endpoint)
+  ↓
+TMDB API
+  ↓
+JSON Response
+  ↓
+React State → UI
+```
+
+A single reusable `fetchMovies()` function handles API requests. Endpoint functions only build the required URL.
+
+### Endpoints
+
+```text
+allMovies()       → /discover/movie
+searchapi()       → /search/movie
+getGenres()       → /genre/movie/list
+discoverMovies()  → /discover/movie + filters
+```
+
+### Fetch Logic
+
+```text
+Filters active?
+   ↓ Yes → discoverMovies()
+
+No
+ ↓
+Search active?
+   ↓ Yes → searchapi()
+
+No
+ ↓
+allMovies()
+```
+
+Filters are built with `URLSearchParams`, allowing optional genre, rating, and year parameters.
+
+## 📂 Structure
+
+```text
+src/
+├── components/
+│   ├── Filter.jsx
+│   ├── Loader.jsx
+│   ├── MovieCards.jsx
+│   ├── Pagination.jsx
+│   └── Search.jsx
+├── services/
+│   └── tmdb.js
+└── pages/
+    └── Main.jsx
+```
+
+## 📚 Key Concepts Practiced
+
+**API fetching · async/await · React state · useEffect · debouncing · URLSearchParams · destructuring · pagination · conditional rendering**
