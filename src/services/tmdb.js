@@ -1,7 +1,10 @@
+
 // api algorithm
 // api key : read access token from TMDB in .env
 
-// import THE API KEY from the .env  , Access in Vite: import.meta.env.VITE_TMDB_API_KEY — variable must start with VITE_ or it won't be exposed to your frontend code.
+// import THE API KEY from the .env
+// Access in Vite: import.meta.env.VITE_TMDB_API_KEY
+// variable must start with VITE_ or it won't be exposed to your frontend code.
 
 // step 1. Constants —
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -9,47 +12,79 @@ const API_BASE_URL = "https://api.themoviedb.org/3";
 
 const API_OPTIONS = {
   method: "GET",
-
   headers: {
     accept: "application/json",
     Authorization: `Bearer ${API_KEY}`,
   },
 };
 
-// 2. defining Endpoints, One function per endpoint — pure, no state, no UI
+// Reusable fetch function
+// Every endpoint function only needs to provide the endpoint.
+// fetch() → Response → response.json() → JS object
 
-export const allMovies = async (page = 1) => {
-  // 1. fetch() gives a Promise, so store it in response using await.
-  // 2. The Promise resolves to a Response object.
-  // 3. response.json() returns a Promise of the parsed data.
-  // 4. If the response fails, throw an error.
-  // 5. response.json() reads the Response body and parses it into a real JS object
-  // it's async too (reading the stream takes a moment), hence the second await
-
-  const endpoint = `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false&language=en-US&page=${page}&sort_by=popularity.desc`;
+const fetchMovies = async (endpoint) => {
   const response = await fetch(endpoint, API_OPTIONS);
+
   if (!response.ok) {
     throw new Error("Failed to fetch movies");
-    // throwing here stops this function immediately and hands control to
-    // whichever try/catch called this function — that's the component, not here
   }
 
-  const data = await response.json();
-  return data; // hand the parsed data to whoever called allMovies()
+  return await response.json();
 };
 
-// encodeURIComponent() encodes special characters in a search string so it can safely go inside a URL.
+// 2. defining Endpoints, One function per endpoint — pure, no state, no UI
+
+export const allMovies = (page = 1) => {
+  const endpoint =
+    `${API_BASE_URL}/discover/movie?include_adult=false&include_video=false` +
+    `&language=en-US&page=${page}&sort_by=popularity.desc`;
+
+  return fetchMovies(endpoint);
+};
+
+// encodeURIComponent() encodes special characters in a search string
+// so it can safely go inside a URL.
 // Example: encodeURIComponent("Spider Man")
 
-export const searchapi = async (searchquery, page = 1) => {
-  const endpoint = `${API_BASE_URL}/search/movie?query=${encodeURIComponent(searchquery)}&include_adult=false&language=en-US&page=${page}`;
-  const response = await fetch(endpoint, API_OPTIONS);
+export const searchapi = (searchquery, page = 1) => {
+  const endpoint =
+    `${API_BASE_URL}/search/movie?query=${encodeURIComponent(searchquery)}` +
+    `&include_adult=false&language=en-US&page=${page}`;
 
-  if (!response.ok) {
-    throw new Error("Failed to search movies");
-  }
-
-  const data = await response.json();
-  return data;
+  return fetchMovies(endpoint);
 };
-  
+
+export const getGenres = () => {
+  const endpoint = `${API_BASE_URL}/genre/movie/list?language=en`;
+
+  return fetchMovies(endpoint).then((data) => data.genres);
+};
+
+// Why URLSearchParams here instead of a template literal:
+// once you have several optional filters, manually building a string
+// with & gets messy. URLSearchParams builds the query string for you
+// and correctly URL-encodes values automatically.
+
+export const discoverMovies = ({
+  page = 1,
+  genreId = "",
+  minRating = "",
+  releaseYear = "",
+} = {}) => {
+  const params = new URLSearchParams({
+    include_adult: "false",
+    include_video: "false",
+    language: "en-US",
+    sort_by: "popularity.desc",
+    page,
+  });
+
+  if (genreId) params.append("with_genres", genreId);
+  if (minRating) params.append("vote_average.gte", minRating);
+  if (releaseYear) params.append("primary_release_year", releaseYear);
+
+  const endpoint = `${API_BASE_URL}/discover/movie?${params}`;
+
+  return fetchMovies(endpoint);
+};
+
