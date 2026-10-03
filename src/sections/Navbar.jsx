@@ -5,7 +5,7 @@ const Navbar = () => {
     <nav>
       {/* add logo img */}
       <NavLink to="/">Home</NavLink>
-      {/* <NavLink to="/favorites">Favourites</NavLink> */}
+      <NavLink to="/favorites">Favourites</NavLink>
     </nav>
   );
 };

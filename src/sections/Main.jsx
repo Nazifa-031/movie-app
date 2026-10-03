@@ -12,6 +12,9 @@ import Pagination from "../components/Pagination";
 import Search from "../components/Search";
 import Filter from "../components/Filter";
 import TopThree from "./TopThree";
+import FavoritesPage from "./FavoritesPage";
+
+const MAX_FAVORITES = 10;
 
 const Main = () => {
   // all movies
@@ -21,7 +24,7 @@ const Main = () => {
   // trending
   const [trending, setTrending] = useState([]);
   const [topThree, setTopThree] = useState([]);
-  const [trendingLoading, setTrendingLoading] = useState(true); // true so there's no empty flash on first render
+  const [trendingLoading, setTrendingLoading] = useState(true);
   const [trendingError, setTrendingError] = useState("");
   // pagination
   const [page, setPage] = useState(1);
@@ -31,17 +34,35 @@ const Main = () => {
   const [genreId, setGenreId] = useState("");
   const [minRating, setMinRating] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
-  // // favorite movies
-  // const [favoriteMovies, setfavoriteMovies] = useState([]);
-  // const [limitMessage, setlimitMessage] = useState("");
+  // favorite movies
+  const [favoriteMovies, setFavoriteMovies] = useState([]);
+  const [limitMessage, setLimitMessage] = useState("");
 
-  // // ---------- Favorite ----------
+  // ---------- Favorite ----------
+  // helper: is this movie id in the favorites array? -> true / false
+  const isFavorite = (movieId) =>
+    favoriteMovies.some((fav) => fav.id === movieId);
 
-  // const isLiked = favoriteMovies.map((movie) => )
+  const onToggleFavorite = (movie) => {
+    // 1. already liked -> remove
+    if (isFavorite(movie.id)) {
+      setFavoriteMovies(favoriteMovies.filter((fav) => fav.id !== movie.id));
+      setLimitMessage("");
+      return;
+    }
 
-  // const toggleLike = (params) => {
+    // 2. not liked, list is full -> block
+    if (favoriteMovies.length >= MAX_FAVORITES) {
+      setLimitMessage(
+        `Limit reached: you can save up to ${MAX_FAVORITES} favorites. Remove one to add another.`
+      );
+      return;
+    }
 
-  // };
+    // 3. not liked, there is room -> add
+    setFavoriteMovies([...favoriteMovies, movie]);
+    setLimitMessage("");
+  };
 
   // ---------- Fetching ----------
   const loadTrending = async () => {
@@ -51,7 +72,7 @@ const Main = () => {
       setTrending(response.results.slice(0, 10));
     } catch (err) {
       console.error(`Error in loadTrending: ${err}`);
-      setTrendingError(err.message || "something went wrong");
+      setTrendingError(err.message || "Something went wrong");
     } finally {
       setTrendingLoading(false);
     }
@@ -59,7 +80,6 @@ const Main = () => {
 
   useEffect(() => {
     loadTrending();
-    console.log("trending", topThree, trending);
   }, []);
 
   const loadMovies = async () => {
@@ -85,54 +105,39 @@ const Main = () => {
   };
 
   useEffect(() => {
-    console.log("movies", movies);
     const timeoutId = setTimeout(loadMovies, 500);
     return () => clearTimeout(timeoutId);
   }, [search, page, genreId, minRating, releaseYear]);
 
+  // ---------- Debug ----------
   useEffect(() => {
     console.group("DEBUG");
-
     console.log("trending (10):", trending);
     console.log("topThree (3):", topThree);
-    console.log("one item = topThree[0]:", topThree[0]);
-    console.log("topThree is array?", Array.isArray(topThree));
-    console.log(
-      "trendingLoading:",
-      trendingLoading,
-      "| trendingError:",
-      trendingError,
-    );
-
     console.log("movies:", movies);
-    console.log("isLoading:", isLoading, "| error:", error);
-
+    console.log("favoriteMovies:", favoriteMovies);
+    console.log("limitMessage:", limitMessage);
     console.groupEnd();
-  }, [
-    trending,
-    topThree,
-    trendingLoading,
-    trendingError,
-    movies,
-    isLoading,
-    error,
-  ]);
+  }, [trending, topThree, movies, favoriteMovies, limitMessage]);
+
   // ---------- UI ----------
   return (
     <Routes>
+      {/* HOME */}
       <Route
         path="/"
         element={
           <>
-            {/* <p>{limitMessage}</p> */}
+            {limitMessage && <p role="alert">{limitMessage}</p>}
+
             {trendingLoading ? (
               <Loader />
             ) : trendingError ? (
               <p>{trendingError}</p>
             ) : (
               <>
+                <p>Top Three Movies</p>
                 <ul>
-                  <p>Top Three Movies </p>
                   {topThree.map((topMovie) => (
                     <TopThree key={topMovie.id} topMovie={topMovie} />
                   ))}
@@ -156,10 +161,15 @@ const Main = () => {
               <p>{trendingError}</p>
             ) : (
               <>
+                <p>Trending Movies</p>
                 <ul>
-                  <p>Trending Movies </p>
                   {trending.map((trdMovie) => (
-                    <MovieCard key={trdMovie.id} movie={trdMovie} />
+                    <MovieCard
+                      key={trdMovie.id}
+                      movie={trdMovie}
+                      isFavorite={isFavorite(trdMovie.id)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
                   ))}
                 </ul>
               </>
@@ -171,10 +181,15 @@ const Main = () => {
               <p>{error}</p>
             ) : (
               <>
+                <p>All Movies</p>
                 <ul>
-                  <p>all Movies </p>
                   {movies.map((movie) => (
-                    <MovieCard key={movie.id} movie={movie} />
+                    <MovieCard
+                      key={movie.id}
+                      movie={movie}
+                      isFavorite={isFavorite(movie.id)}
+                      onToggleFavorite={onToggleFavorite}
+                    />
                   ))}
                 </ul>
 
@@ -186,6 +201,18 @@ const Main = () => {
               </>
             )}
           </>
+        }
+      />
+
+      {/* FAVORITES PAGE */}
+      <Route
+        path="/favorites"
+        element={
+          <FavoritesPage
+            favoriteMovies={favoriteMovies}
+            onToggleFavorite={onToggleFavorite}
+            isFavorite={isFavorite()}
+          />
         }
       />
     </Routes>
