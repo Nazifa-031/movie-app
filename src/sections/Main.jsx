@@ -1,131 +1,195 @@
-import { allMovies, searchapi, discoverMovies  } from "../services/tmdb";
+import {
+  allMovies,
+  searchapi,
+  discoverMovies,
+  trendingMovies,
+} from "../services/tmdb";
 import { useEffect, useState } from "react";
-import MovieCards from "../components/MovieCards";
+import { Routes, Route } from "react-router-dom";
+import MovieCard from "../components/MovieCard";
 import Loader from "../components/Loader";
 import Pagination from "../components/Pagination";
 import Search from "../components/Search";
 import Filter from "../components/Filter";
+import TopThree from "./TopThree";
 
 const Main = () => {
+  // all movies
+  const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const [movies, setmovies] = useState([]); // [moviesarray, setmoviesarray]
-
+  // trending
+  const [trending, setTrending] = useState([]);
+  const [topThree, setTopThree] = useState([]);
+  const [trendingLoading, setTrendingLoading] = useState(true); // true so there's no empty flash on first render
+  const [trendingError, setTrendingError] = useState("");
+  // pagination
   const [page, setPage] = useState(1);
   const [totalpages, setTotalpages] = useState(1);
-
+  // search
   const [search, setSearch] = useState("");
-
   const [genreId, setGenreId] = useState("");
   const [minRating, setMinRating] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
+  // // favorite movies
+  // const [favoriteMovies, setfavoriteMovies] = useState([]);
+  // const [limitMessage, setlimitMessage] = useState("");
 
-  const Movies = async () => {
+  // // ---------- Favorite ----------
+
+  // const isLiked = favoriteMovies.map((movie) => )
+
+  // const toggleLike = (params) => {
+
+  // };
+
+  // ---------- Fetching ----------
+  const loadTrending = async () => {
+    try {
+      const response = await trendingMovies("week", 1);
+      setTopThree(response.results.slice(0, 3));
+      setTrending(response.results.slice(0, 10));
+    } catch (err) {
+      console.error(`Error in loadTrending: ${err}`);
+      setTrendingError(err.message || "something went wrong");
+    } finally {
+      setTrendingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTrending();
+    console.log("trending", topThree, trending);
+  }, []);
+
+  const loadMovies = async () => {
     setIsLoading(true);
     setError("");
     try {
       const hasFilters = genreId || minRating || releaseYear;
 
       const response = hasFilters
-        ? await discoverMovies({
-            page,
-            genreId,
-            minRating,
-            releaseYear,
-          })
+        ? await discoverMovies({ page, genreId, minRating, releaseYear })
         : search
           ? await searchapi(search, page)
           : await allMovies(page);
-      console.log(response); //if search ? give search string and page to the searchapi endpoint , else : {page: 1, results: Array(20), total_pages: 1001, total_results: 20001}
 
-      const movies = response.results;
-      setmovies(movies);
-      console.log(movies); // {page: 1, results: Array(20), total_pages: 1001, total_results: 20001}
-
-      const total = response.total_pages;
-      setTotalpages(total);
-    } catch (error) {
-      setError(error);
-      console.error(`Error in the Movies Function: ${error}`);
+      setMovies(response.results);
+      setTotalpages(response.total_pages);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+      console.error(`Error in loadMovies: ${err}`);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      Movies();
-    }, 500);
+    console.log("movies", movies);
+    const timeoutId = setTimeout(loadMovies, 500);
     return () => clearTimeout(timeoutId);
   }, [search, page, genreId, minRating, releaseYear]);
 
-  // cleanup: if `search` or `page` changes again,  before 500ms is up, react re starts this useeffect as,
-  // Every time search changes, React first runs this cleanup from the previous render (cancelling the old pending timer) before setting up the new one.
-  //  — this is the actual debounce mechanism
+  useEffect(() => {
+    console.group("DEBUG");
 
-  return isLoading ? (
-    <Loader />
-  ) : error ? (
-    <p>{error}</p>
-  ) : (
-    <>
-      <Search search={search} setSearch={setSearch} />
-      <Filter
-        genreId={genreId}
-        setGenreId={setGenreId}
-        minRating={minRating}
-        setMinRating={setMinRating}
-        releaseYear={releaseYear}
-        setReleaseYear={setReleaseYear}
+    console.log("trending (10):", trending);
+    console.log("topThree (3):", topThree);
+    console.log("one item = topThree[0]:", topThree[0]);
+    console.log("topThree is array?", Array.isArray(topThree));
+    console.log(
+      "trendingLoading:",
+      trendingLoading,
+      "| trendingError:",
+      trendingError,
+    );
+
+    console.log("movies:", movies);
+    console.log("isLoading:", isLoading, "| error:", error);
+
+    console.groupEnd();
+  }, [
+    trending,
+    topThree,
+    trendingLoading,
+    trendingError,
+    movies,
+    isLoading,
+    error,
+  ]);
+  // ---------- UI ----------
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <>
+            {/* <p>{limitMessage}</p> */}
+            {trendingLoading ? (
+              <Loader />
+            ) : trendingError ? (
+              <p>{trendingError}</p>
+            ) : (
+              <>
+                <ul>
+                  <p>Top Three Movies </p>
+                  {topThree.map((topMovie) => (
+                    <TopThree key={topMovie.id} topMovie={topMovie} />
+                  ))}
+                </ul>
+              </>
+            )}
+
+            <Search search={search} setSearch={setSearch} />
+            <Filter
+              genreId={genreId}
+              setGenreId={setGenreId}
+              minRating={minRating}
+              setMinRating={setMinRating}
+              releaseYear={releaseYear}
+              setReleaseYear={setReleaseYear}
+            />
+
+            {trendingLoading ? (
+              <Loader />
+            ) : trendingError ? (
+              <p>{trendingError}</p>
+            ) : (
+              <>
+                <ul>
+                  <p>Trending Movies </p>
+                  {trending.map((trdMovie) => (
+                    <MovieCard key={trdMovie.id} movie={trdMovie} />
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {isLoading ? (
+              <Loader />
+            ) : error ? (
+              <p>{error}</p>
+            ) : (
+              <>
+                <ul>
+                  <p>all Movies </p>
+                  {movies.map((movie) => (
+                    <MovieCard key={movie.id} movie={movie} />
+                  ))}
+                </ul>
+
+                <Pagination
+                  page={page}
+                  totalpages={totalpages}
+                  setPage={setPage}
+                />
+              </>
+            )}
+          </>
+        }
       />
-      <ul>
-        {movies.map((movie) => (
-          <MovieCards key={movie.id} movie={movie} />
-        ))}
-      </ul>
-
-      <Pagination page={page} totalpages={totalpages} setPage={setPage} />
-    </>
+    </Routes>
   );
 };
 
 export default Main;
-
-// response obj
-// has result of (20) arrays of objects
-//
-// adult
-// :
-// false
-
-// genre_ids
-// :
-// (3) [878, 28, 12]
-// id
-// :
-// 969681
-// original_language
-// :
-// "en"
-
-// overview
-// :
-// "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see."
-// popularity
-// :
-// 704.4472
-// poster_path
-// :
-// "/bjiS5ipwxb9JFy3XRRN4OAilSeX.jpg"
-// release_date
-// :
-// "2026-07-29"
-
-// title
-// :
-// "Spider-Man: Brand New Day"
-
-// vote_average
-// :
-// 7.862

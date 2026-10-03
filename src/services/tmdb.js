@@ -88,3 +88,7 @@ export const discoverMovies = ({
   return fetchMovies(endpoint);
 };
 
+export const trendingMovies = async (timeWindow = "week", page = 1) => {
+  const endpoint = `${API_BASE_URL}/trending/movie/${timeWindow}?page=${page}&api_key=${API_KEY}`;
+  return fetchMovies(endpoint);
+};

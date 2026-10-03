@@ -1,13 +1,12 @@
-import React from "react";
+import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
   return (
-    <div>
+    <nav>
       {/* add logo img */}
-      <button type="b">Home </button>
-      <button type="b">Browse and Filter </button>
-      <button type="b">Favourites </button>
-    </div>
+      <NavLink to="/">Home</NavLink>
+      {/* <NavLink to="/favorites">Favourites</NavLink> */}
+    </nav>
   );
 };
 
